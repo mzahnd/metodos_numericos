@@ -11,5 +11,5 @@
 > tos, y se la debe colocar en el mismo archivo que la anterior.
 
 ## TODO
-- [ ] 1: dec2binf
+- [x] 1: dec2binf
 - [x] 2: Test
