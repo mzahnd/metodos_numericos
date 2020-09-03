@@ -94,7 +94,7 @@ def dec2binf(decNum):
         decExp = 2**(1-bias)
     else:
         # Normal number
-        while(power >= 0 and not subnormal):
+        while(power >= 0):
             # Example to understand this conditional:
             # 2^2 + 2^3 + 2^4 = 2^2 + 24 = 2^power + powerCalc
             if (2**((2**power + powCalc) - bias) <= decNum):
@@ -310,5 +310,5 @@ def test():
 
 
 if __name__ == "__main__":
-    print("Executed as stand alone script. Running test function.\n")
+    print("Executed as stand-alone script. Running test function.\n")
     test()
