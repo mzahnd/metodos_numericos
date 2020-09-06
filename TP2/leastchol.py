@@ -144,11 +144,13 @@ def leastsq(A, b):
     """
 
     if type(A) != np.ndarray or  type(b) != np.ndarray:
-        raise RuntimeError("Input error! One of the leastq arguments is not a numpy array")
+        raise RuntimeError("Input error! One of the leastq arguments is not a "
+                            + "numpy array")
 
     if b.shape[1] != 1 or A.shape[0] != b.shape[0]:
         print('b', A.shape[1], b.shape[0])
-        raise RuntimeError("b is not a nx1 vector or the size of A is different than n.")
+        raise RuntimeError("b is not a nx1 vector or the size of A is "
+            + "different than n.")
 
   # D is A^t*A and E is A^t*b
   # D x = E
@@ -268,7 +270,8 @@ def test():
          np.array([[4595 / 512], [11 / 8], [43 / 64]])),
         
             (
-            np.array([ [-72, 8, 64, 91], [0, 70, -90, -27], [0, 0, -39, -22], [0, 0, 0, -22] ]),
+            np.array([ [-72, 8, 64, 91], [0, 70, -90, -27], [0, 0, -39, -22], 
+                       [0, 0, 0, -22] ]),
             np.array([ [-40], [18], [-47], [-2] ]),
             np.array([ [3499 / 1848], [3555 / 2002], [15 / 13], [1 / 11] ])
             )
