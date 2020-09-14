@@ -30,29 +30,29 @@ def cholesky(matrix):
     if matrix.shape[0] != matrix.shape[1]:
         raise RuntimeError("Matrix is not square.")
 
-    # Is symmetric?
+    # Is it symmetric?
     if not np.allclose(matrix, np.transpose(matrix)):
         raise RuntimeError("Matrix is not symmetric.")
     else:
         size = matrix.shape[0]
-    eigenvalues, _ = np.linalg.eig(matrix)
-    for value in eigenvalues:
-        if value < 0:
-            raise RuntimeError("Matrix is not definite symmetric.")
-
 
     # Now the algorithm itself
 
     lower = np.zeros(matrix.shape)
     
     # We iterate over the triangle from left to right and top to bottom
-
     for i in range(size):
         for j in range(i + 1):  
-            #if the element belongs to the diagonal:
+           
+            # The element belongs to the diagonal:
             if i == j:
-                lower[i][j] = np.sqrt(matrix[i][i] - np.sum(lower[i][:i]**2))
-            # if the element doesn't belong to the diagonal
+                tosqrt = matrix[i][i] - np.sum(lower[i][:i]**2)
+                if tosqrt <= 0:
+                    raise RuntimeError("Matrix is not definite symmetric.")
+                else:
+                    lower[i][j] = np.sqrt(tosqrt)
+            
+            # The element *does not* belong to the diagonal
             else:
                 sumatoria = []
                 for z in range(j):
@@ -179,8 +179,11 @@ def test():
         None
     """
 
+    # ====== Cholesky ======
     # Definite positive matrices
     # This matrices eigenvalues are > 0
+    #
+    # Eigenvalues sign has been verified using numpy's linalg.eig
     positiveMatrices = (np.array([[2, 3], [3, 6]]), np.array([[1, 2], [2, 5]]),
                         np.array([[57, 40, 7], [40, 78, 6], [7, 6, 13]]),
                         np.array([[6, 3, 4, 8], [3, 6, 5, 1], [4, 5, 10, 7],
@@ -190,6 +193,8 @@ def test():
 
     # Not definite positive matrices
     # This matrices eigenvalues are < 0
+    #
+    # Eigenvalues sign has been verified using numpy's linalg.eig
     notPositiveMatrices = (np.array([[4, 2],
                                      [2, -1]]), np.array([[-1, 1], [1, 1]]),
                            np.array([[3, 8, 9], [8, -5, 4], [9, 4, 0]]),
@@ -202,9 +207,9 @@ def test():
                     np.array([[1, 5, 7], [2, 4, 9], [0, 3, 0]]),
                     np.array([[5, 7, 5, 2], [9, 2, 6, 2], [40, 54, 78, 84],
                               [10, 43, 21, 19]]))
-
-    # ====== Cholesky ======
+    
     print("="*60, "\nTesting cholesky() function...")
+
     # Definite positive matrices
     for testMatrix in positiveMatrices:
         print('-'*50)
@@ -219,7 +224,7 @@ def test():
             assert False, "The last tested matrix did not pass the test."
 
     # Not definite positive matrices
-    # This matrices should raise and exception (these aren't valid)
+    # This matrices should raise and exception (as these aren't valid)
     for testMatrix in notPositiveMatrices:
         print('-'*50)
         print(f'Testing not definite positive matrix: \n{testMatrix}')
@@ -231,7 +236,7 @@ def test():
             print("-> Pass <-")
 
     # Not Hermitian matrices
-    # This matrices should raise and exception (these aren't valid)
+    # This matrices should raise and exception (as these aren't valid)
     for testMatrix in notHermitian:
         print('-'*50)
         print(f'Testing not Hermitian matrix: \n{testMatrix}')
@@ -247,35 +252,36 @@ def test():
     # 0: matrix A (lower triangular)
     # 1: matrix b (System solution)
     # 2: matrix c (Expected answer)
+    #
+    # System's solutions were verified using WolframAlpha.
     lowTriangMatrices = (
-        (np.array([[8, 0, 0], [2, 3, 0],
-                   [4, 7, 1]]), np.array([[8], [5],
-                                          [0]]), np.array([[1], [1], [-11]])),
-        (np.array([[8, 0, 0], [2, 3, 0], [4, 7, 1]]), np.array([[5], [1],
-                                                                [-8]]),
+        (np.array([[8, 0, 0], [2, 3, 0], [4, 7, 1]]),
+         np.array([[8], [5], [0]]),
+         np.array([[1], [1], [-11]])),
+        (np.array([[8, 0, 0], [2, 3, 0], [4, 7, 1]]),
+         np.array([[5], [1], [-8]]),
          np.array([[5 / 8], [-1 / 12], [-119 / 12]])),
-        (np.array([[5, 0, 0], [76, 63, 0], [47, 77,
-                                            31]]), np.array([[69], [10], [4]]),
+        (np.array([[5, 0, 0], [76, 63, 0], [47, 77, 31]]),
+         np.array([[69], [10], [4]]),
          np.array([[69 / 5], [-742 / 45], [28127 / 1395]])),
-        (np.array([[44, 0, 0, 0], [17, 10, 0, 0], [65, 43, 49, 0],
-                   [75, 5, 81, 76]]), np.array([[66], [74], [8], [22]]),
+        (np.array([[44, 0, 0, 0], [17, 10, 0, 0],
+                   [65, 43, 49, 0], [75, 5, 81, 76]]),
+         np.array([[66], [74], [8], [22]]),
          np.array([[3 / 2], [97 / 20], [-5961 / 980], [9747 / 1960]])),
     )
 
     upperTriangMatrices = (
         (np.array([[12, 5, 6], [0, 1, -4], [0, 0, 9]]),
-         np.array([[-37], [2], [9]]), np.array([[-73 / 12], [6], [1]])),
-        (np.array([[-8, 35, 65], [0, 40, -64],
-                   [0, 0, 64]]), np.array([[20], [12], [43]]),
+         np.array([[-37], [2], [9]]),
+         np.array([[-73 / 12], [6], [1]])),
+        (np.array([[-8, 35, 65], [0, 40, -64], [0, 0, 64]]),
+         np.array([[20], [12], [43]]),
          np.array([[4595 / 512], [11 / 8], [43 / 64]])),
-        
-            (
-            np.array([ [-72, 8, 64, 91], [0, 70, -90, -27], [0, 0, -39, -22], 
-                       [0, 0, 0, -22] ]),
-            np.array([ [-40], [18], [-47], [-2] ]),
-            np.array([ [3499 / 1848], [3555 / 2002], [15 / 13], [1 / 11] ])
-            )
-         )
+        (np.array([[-72, 8, 64, 91], [0, 70, -90, -27],
+                   [0, 0, -39, -22], [0, 0, 0, -22] ]),
+         np.array([ [-40], [18], [-47], [-2] ]),
+         np.array([ [3499 / 1848], [3555 / 2002], [15 / 13], [1 / 11] ]))
+    )
 
     print("="*60, "\nTesting linearSolverForward() function.")
     for system in lowTriangMatrices:
@@ -315,7 +321,7 @@ def test():
             assert False, "The last tested system did not pass the test."
 
     # ====== leastsq() ======
-    sqSystems = ( 
+    sqSystems = (
                 (np.array([[1, 1], [4, 1], [9, 1]]),
                 np.array([[3.1], [8.8], [20.2]]),
                 np.array([[2109/980], [23/35]])),
