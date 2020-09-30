@@ -4,16 +4,25 @@
 Sources:
   Warning management:
   https://stackoverflow.com/a/15934081
+
+  Why using int and float as datatypes and not np.uint64 or similar:
+  https://www.python.org/dev/peps/pep-0237/
+  More on this thread: https://stackoverflow.com/q/538551
 """
 
 import math
 import numpy as np
 import warnings
 
+# Tolerance of the bisection method used in powerrat()
+_POWERRAT_TOLERANCE=0.000001
+
+
 def powerint (x, p): 
   '''x: base; p:potencia
     devuelve x^p'''
 
+  # Check that both arguments are valid.
   if x < 0:
     raise RuntimeError("Please provide a non negative number for the base.")
   elif type(p) is (not int or not np.intc or not np.int_ or not np.int8 \
@@ -22,8 +31,13 @@ def powerint (x, p):
   elif (x == 0 and p == 0):
     raise ArithmeticError("Math error. Trying to perform: 0^0")
 
+  # Powers that are not necessary to calculate: 0^p, 1^p, x^0, x^1
   if x == 0:
-      return 0
+    return 0
+  elif x == 1 or p == 0:
+    return 1
+  elif p == 1:
+    return x
 
   negativeExponent = False
   y = int(1)
@@ -46,8 +60,6 @@ def powerint (x, p):
             p *= -1
           
           raise OverflowError(f"Overflow while performing: ({x})^({p}).")
-          #print("Overflow!!")
-          #pass
       
   if negativeExponent == True and y != 0:
     return float(1/y)
@@ -61,25 +73,63 @@ def bisection(point, q, y):
   return powerint(point, q) - y
 
 def powerrat (x, p, q):
+
+  # Verify that all arguments are valid
+  if x < 0:
+    raise RuntimeError("Please provide a non negative number for the base.")
+  elif type(p) is (not int or not np.intc or not np.int_ or not np.int8 \
+                or not np.int16 or not np.int32 or not np.int64) \
+       and type(p) is not type(q):
+    raise TypeError("Exponent must be an int.")
+  elif (x == 0 and p == 0):
+    raise ArithmeticError("Math error. Trying to perform: 0^0")
+  elif (q == 0):
+    raise ZeroDivisionError("Math error. q must not be zero.")
+
+  # Powers that are not necessary to calculate: 0^(p/q), 1^(p/q) x^0, x^1
+  if p == q:
+    return x
+  elif (x != 0 and p == 0) or (x == 1):
+    return 1
+  elif x == 0:
+    return 0
+
+  # (-)*(-) = (+)
+  if (p < 0 and q < 0):
+    p *= -1
+    q *= -1
+
+  # The case where p/q is an integer number must be taken into 
+  # consideration as it could save a lot of time.
+  # (67)^(10/2)
+  possibleRealExponent = p/q
+  if possibleRealExponent.is_integer():
+    p = int(possibleRealExponent)
+    q = 1
   
   y = powerint(x, p)
   
-  if q<0:
+  # In this case, it's like calling powerint directly.
+  # There's nothing more to do
+  if q == 1:
+    return y
+  
+  if q < 0:
     y = 1/y
     q *= -1
   
-  tol = 0.0001
+  tol = _POWERRAT_TOLERANCE
   
   a = 0
   b = 10
 
   while  bisection(a,q,y)*bisection(b,q,y)>0:
-    print(bisection(a,q,y),bisection(b,q,y))
+    #print(bisection(a,q,y),bisection(b,q,y))
     b+=1000
 
   for _ in range(1000):
     c = (a+b)/2
-    if (b-a)>tol: 
+    if (b-a)>tol:
       if bisection(a,q,y)*bisection(c,q,y)>0:
         a = c
       else:
@@ -215,7 +265,7 @@ def test():
     ([90.424, 20, -93]), ([59.912, -9, 40]),
   )
 
-  print('='*60, "\nTesting powerint()...\n", '-'*60, '\n')
+  print('='*60, "\nTesting powerint()...\n", '-'*60)
   for base, exponent in simpleIntPowers:
     print (f"Testing: ({base})^({exponent})\t\t", end=' ')
     test_powerint(base, exponent)
@@ -226,57 +276,53 @@ def test():
     test_powerint(base, exponent, dataType=float)
     print("-> Pass <-")
 
-  print('='*60, "\nTesting powerrat()...\n", '-'*60, '\n')
+  print('='*60, "\nTesting powerrat()...\n", '-'*60,)
   for base, expNum, expDenom in rationalIntPowers:
-    print (f"Testing: ({base})^({exponent})\t\t", end=' ')
-    test_powerrat(powerrat, base, expNum, expDenom)
+    print (f"Testing: ({base})^({expNum}/{expDenom})\t\t", end=' ')
+    test_powerrat(base, expNum, expDenom)
     print("-> Pass <-")
 
   for base, expNum, expDenom in rationalFloatPowers:
-    print (f"Testing: ({base})^({int(exponent)})\t\t", end=' ')
-    test_powerrat(powerrat, base, expNum, expDenom, dataType=float)
+    print (f"Testing: ({base})^({expNum}/{expDenom})\t\t", end=' ')
+    test_powerrat(base, expNum, expDenom, dataType=float)
     print("-> Pass <-")
-
-def test_pow(fnAns, libAns, exponentNum, dType=int):
-  if dType == int and exponentNum > 0:
-    assert fnAns == libAns, "X ERROR X"
-  else:
-    assert np.allclose(fnAns, libAns), "X ERROR X"
 
 def test_powerint(base, exponent, dataType=int):
   ans = powerint(base, exponent)
 
-  print('{0}'.format(ans))
-
   if base == 0:
-    libPow = 0
+    pyPow = 0
   elif exponent < 0 and base != 0:
-    libPow = 1/(base**((-1)*exponent))
-    print(libPow)
-    
+    pyPow = 1/(base**((-1)*exponent))   
   else:
-    libPow = base**exponent
-    print(libPow)
+    pyPow = base**exponent
+  
+  # For debuging purposes only
+  #print('{0} || {1}'.format(ans, pyPow))
 
-  test_pow(ans, libPow, exponent, dType=dataType)
+  if dataType == int and exponent > 0:
+    assert ans == pyPow, "X ERROR X"
+  else:
+    assert np.allclose(ans, pyPow), "X ERROR X"
 
 def test_powerrat(base, exN, exD, dataType=int):
+  tol = _POWERRAT_TOLERANCE
+
   ans = powerrat(base, exN, exD)
 
-  print('{0}'.format(ans))
-
   if base == 0:
-    libPow = 0
-  elif (exN < 0 or exD < 0) and base != 0:
-    libPow = 1/(base**((abs(exN)/abs(exD))))
-    print(libPow)
+    pyPow = 0
+  elif (exN < 0 and exD > 0) or (exN > 0 and exD < 0) and base != 0:
+    pyPow = 1/(base**((abs(exN)/abs(exD))))
     
   else:
-    libPow = base**(exN/exD)
-    print(libPow)
+    pyPow = base**(exN/exD)
 
-  test_pow(ans, libPow, exN/exD, dType=dataType)
+  # For debuging purposes only
+  #print('{0} || {1}'.format(ans, pyPow))
 
+  assert math.isclose(ans, pyPow, abs_tol=tol), "X ERROR X"
+  
 
 if __name__ == "__main__":
   print("Executed as stand-alone script. Running test function.\n")
