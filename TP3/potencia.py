@@ -25,8 +25,8 @@ def powerint (x, p):
   # Check that both arguments are valid.
   if x < 0:
     raise RuntimeError("Please provide a non negative number for the base.")
-  elif type(p) is (not int or not np.intc or not np.int_ or not np.int8 \
-                or not np.int16 or not np.int32 or not np.int64):
+  elif type(p) is not int or not np.intc or not np.int_ or not np.int8 \
+                or not np.int16 or not np.int32 or not np.int64:
     raise TypeError("Exponent must be an int.")
   elif (x == 0 and p == 0):
     raise ArithmeticError("Math error. Trying to perform: 0^0")
@@ -56,9 +56,8 @@ def powerint (x, p):
           y *= x
 
         except Warning:
-          if negativeExponent == True and y != 0:
+          if negativeExponent == True:
             p *= -1
-          
           raise OverflowError(f"Overflow while performing: ({x})^({p}).")
       
   if negativeExponent == True and y != 0:
@@ -77,9 +76,9 @@ def powerrat (x, p, q):
   # Verify that all arguments are valid
   if x < 0:
     raise RuntimeError("Please provide a non negative number for the base.")
-  elif type(p) is (not int or not np.intc or not np.int_ or not np.int8 \
+  elif (type(p) is not int or not np.intc or not np.int_ or not np.int8 \
                 or not np.int16 or not np.int32 or not np.int64) \
-       and type(p) is not type(q):
+       and (type(p) is not type(q)):
     raise TypeError("Exponent must be an int.")
   elif (x == 0 and p == 0):
     raise ArithmeticError("Math error. Trying to perform: 0^0")
@@ -143,8 +142,23 @@ def powerrat (x, p, q):
 #print(powerrat (2,3, -4))
 
 def test():
-  """---"""
+  """Test powerint and powerrat functions.
 
+  As powerrat depends on powerint, the last one is tested on the first
+  place.
+  
+  This function will stop the code execution when it finds an error.
+
+  Returns:
+    None
+
+  Raises:
+    Nothing
+  """
+
+  # Valid combinations of x^p and x^(p/q) for both, powerint and powerrat
+  
+  # For powerint
   simpleIntPowers = (
     ([0, 1]), ([0, 17]), ([0, 752]),
     ([2, 0]), ([1, 0]), ([1435, 0]), 
@@ -206,7 +220,7 @@ def test():
     ([90.424, 20]), ([59.912, -9]),
   )
 
-
+  # For powerrat
   rationalIntPowers = (
     ([0, 1, 1]), ([0, 17, 17]), ([0, 1, 752]),
     ([2, 0, 1]), ([1, 0, -5]), ([1435, 0, 9]), 
@@ -265,29 +279,96 @@ def test():
     ([90.424, 20, -93]), ([59.912, -9, 40]),
   )
 
+  # Invalid conditions that should raise an error
+  # For powerint
+  powerintInvalids = (
+    ([0, 0]), ([-5, 0]), ([-48, -7896]), ([87.5, 5.3])
+  )
+
+  # For powerrat
+  powerratInvalids = (
+    ([0, 0, 5]), ([0, 0, 0]), ([-5, 0, 3]), ([-5, 0, 0]), 
+    ([-48, -7896, 42]), ([87.5, 5.3, 9]), ([87.5, 5, 9.5]), ([87, 5.3, 9.2]),
+    ([87.5, 5.3, 0]), ([87315, 53, 0])
+  )
+
+  # ====================================================================
+  # Tests for powerint
   print('='*60, "\nTesting powerint()...\n", '-'*60)
+  # Invalid combinations of x^p
+  for base, exponent in powerintInvalids:
+    print (f"Testing: ({base})^({exponent})\t\t", end=' ')
+    
+    try:
+      powerint(base, exponent)
+      assert False, "X ERROR X"
+    except RuntimeError:
+      assert True
+    except ArithmeticError:
+      assert True
+    except TypeError:
+      assert True
+    print("-> Pass <-")
+
+  # Valid integer combinations of x^p
   for base, exponent in simpleIntPowers:
     print (f"Testing: ({base})^({exponent})\t\t", end=' ')
     test_powerint(base, exponent)
     print("-> Pass <-")
 
+  # Valid floating point combinations of x^p (p is always integer)
   for base, exponent in simpleFloatPowers:
     print (f"Testing: ({base})^({np.int64(exponent)})\t\t", end=' ')
     test_powerint(base, exponent, dataType=float)
     print("-> Pass <-")
 
+  # ====================================================================
+  # Tests for powerrat
   print('='*60, "\nTesting powerrat()...\n", '-'*60,)
+  
+  # Invalid combinations of x^(p/q)
+  for base, exponentN, exponentD in powerratInvalids:
+    print (f"Testing: ({base})^({exponentN}/{exponentD})\t\t", end=' ')
+    try:
+      powerrat(base, exponentN, exponentD)
+      assert False, "X ERROR X"
+    except RuntimeError:
+      assert True
+    except ArithmeticError:
+      assert True
+    except TypeError:
+      assert True
+    print("-> Pass <-")
+  
+  # Valid integer combinations of x^(p/q)
   for base, expNum, expDenom in rationalIntPowers:
     print (f"Testing: ({base})^({expNum}/{expDenom})\t\t", end=' ')
     test_powerrat(base, expNum, expDenom)
     print("-> Pass <-")
 
+  # Valid floating point combinations of x^(p/q) (p and q are always integers)
   for base, expNum, expDenom in rationalFloatPowers:
     print (f"Testing: ({base})^({expNum}/{expDenom})\t\t", end=' ')
     test_powerrat(base, expNum, expDenom, dataType=float)
     print("-> Pass <-")
 
+
 def test_powerint(base, exponent, dataType=int):
+  """Test case for powerint function.
+
+  Calls powerint and compares its answer with python's exponentiation
+  function.
+  Whenever the exponent is a negative number, numpy's allclose function
+  is used instead to deal with floating point numbers.
+
+  This function will stop the code execution when it finds an error.
+
+  Returns:
+    None
+
+  Raises:
+    Nothing
+  """
   ans = powerint(base, exponent)
 
   if base == 0:
@@ -306,6 +387,22 @@ def test_powerint(base, exponent, dataType=int):
     assert np.allclose(ans, pyPow), "X ERROR X"
 
 def test_powerrat(base, exN, exD, dataType=int):
+  """Test case for powerrat function.
+
+  Calls powerrat and compares its answer with python's exponentiation
+  function.
+  The method math.isclose is always used to compare both results as it
+  can take into account the powerrat's tolerance.
+
+  This function will stop the code execution when it finds an error.
+
+  Returns:
+    None
+
+  Raises:
+    Nothing
+  """
+
   tol = _POWERRAT_TOLERANCE
 
   ans = powerrat(base, exN, exD)
