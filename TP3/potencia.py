@@ -53,8 +53,11 @@ def powerint (x, p):
   elif type(p) is not int or not np.intc or not np.int_ or not np.int8 \
                 or not np.int16 or not np.int32 or not np.int64:
     raise TypeError("Exponent must be an int.")
-  elif (x == 0 and p == 0):
-    raise ArithmeticError("Math error. Trying to perform: 0^0")
+  elif x == 0:
+    if p==0:
+      raise ArithmeticError("Math error. Trying to perform: 0^0")
+    elif p<0:
+      raise ArithmeticError("Math error. Trying to divide by zero")
 
   # Powers that are not necessary to calculate: 0^p, 1^p, x^0, x^1
   if x == 0:
@@ -136,8 +139,11 @@ def powerrat (x, p, q):
                 or not np.int16 or not np.int32 or not np.int64) \
        and (type(p) is not type(q)):
     raise TypeError("Exponent must be an int.")
-  elif (x == 0 and p == 0):
-    raise ArithmeticError("Math error. Trying to perform: 0^0")
+    elif x == 0:
+      if p==0:
+        raise ArithmeticError("Math error. Trying to perform: 0^0")
+      elif p<0:
+        raise ArithmeticError("Math error. Trying to divide by zero")
   elif (q == 0):
     raise ZeroDivisionError("Math error. q must not be zero.")
 
