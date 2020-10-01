@@ -13,11 +13,13 @@ Sources:
 
   Why using int and float as datatypes and not np.uint64 or similar:
   https://www.python.org/dev/peps/pep-0237/
+  https://docs.python.org/3/c-api/long.html
   More on this thread: https://stackoverflow.com/q/538551
 """
 
 import math
 import numpy as np
+import time
 import warnings
 
 # Tolerance of the bisection method used in powerrat()
@@ -155,7 +157,8 @@ def powerrat (x, p, q):
 
   # The case where p/q is an integer number must be taken into 
   # consideration as it could save a lot of time.
-  # (67)^(10/2)
+  # This can be tested evaluating, for example, (67)^(10/2) with and
+  # without the following lines in this function.
   possibleRealExponent = p/q
   if possibleRealExponent.is_integer():
     p = int(possibleRealExponent)
@@ -173,10 +176,10 @@ def powerrat (x, p, q):
   b = 10
   # Expand the interval if f(a)f(b)>0
   while _bisection(a,q,y)*_bisection(b,q,y) > 0:
-    b+=1000
+    b += 1000
 
   # Perfom bisection method for finding the root
-  for _ in range(1000):
+  for _ in range(10000):
     c = (a + b)/2
     if (b - a) > _POWERRAT_TOLERANCE:
       if _bisection(a,q,y)*_bisection(c,q,y) > 0:
@@ -476,4 +479,12 @@ def test_powerrat(base, exN, exD, dataType=int):
 
 if __name__ == "__main__":
   print("Executed as stand-alone script. Running test function.\n")
+
+  initialTime = time.time_ns()
+
   test()
+
+  finalTime = time.time_ns()
+
+  print("Tests ran in:", end=' ')
+  print(f"{(finalTime-initialTime)*10**(-9)} s ({finalTime-initialTime} ns)")
