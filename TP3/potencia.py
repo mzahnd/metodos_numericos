@@ -45,9 +45,6 @@ def powerint (x, p):
     OverflowError
   """
 
-  '''x: base; p:potencia
-    devuelve x^p'''
-
   # Check that both arguments are valid.
   if x < 0:
     raise RuntimeError("Please provide a non negative number for the base.")
