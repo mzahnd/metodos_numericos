@@ -1,5 +1,11 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Trabajo Práctico: Ecuaciones no-lineales
+
+@author: Batinic Rey, Joaquín
+@author: Pompozzi, Magalí M.
+@author: Zahnd, Martín E.
 
 Sources:
   Warning management:
@@ -18,7 +24,27 @@ import warnings
 _POWERRAT_TOLERANCE=0.000001
 
 
-def powerint (x, p): 
+def powerint (x, p):
+  """Calculate x^p
+
+  When p < 0, x^(|p|) is evaluated first and then inverted.
+  This way no precision is lost due to floating point during the
+  exponentiation part of the process.
+
+  Arguments:
+    x: Intiger or floating point number greater or equal to zero.
+    p: Intiger number (different than zero iff x equals zero).
+
+  Returns:
+  The solution of x^p
+
+  Raises:
+    RuntimeError
+    TypeError
+    ArithmeticError
+    OverflowError
+  """
+
   '''x: base; p:potencia
     devuelve x^p'''
 
@@ -66,12 +92,43 @@ def powerint (x, p):
     return y
 
 
-def bisection(point, q, y): 
+def _bisection(point, q, y):
+  """This function is used by powerrat to evaluate a possible bisection point.
+
+  The original equation is:
+    point = y^(1/q)
+  Which equals to, as long as point > 0:
+    (point^q) - y = 0
+
+  Returns:
+    (point^q) - y
+
+  Raises:
+    Noting
+  """
+
   '''Esta función es la que se evalúa para despejar 
   por bisección point = y^(1/q)'''
   return powerint(point, q) - y
 
 def powerrat (x, p, q):
+  """Approximate the solution of x^(p/q) with tolerance _POWERRAT_TOLERANCE.
+
+  Arguments:
+    x: Intiger or floating point number greater or equal to zero.
+    p: Intiger number
+    q: Intiger number different than zero.
+
+  Returns:
+    An approximation of the solution of x^(p/q), with tolerance 
+    _POWERRAT_TOLERANCE
+
+  Raises:
+    RuntimeError
+    TypeError
+    ArithmeticError
+    ZeroDivisionError
+  """
 
   # Verify that all arguments are valid
   if x < 0:
@@ -93,10 +150,11 @@ def powerrat (x, p, q):
   elif x == 0:
     return 0
 
-  # (-)*(-) = (+)
-  if (p < 0 and q < 0):
+  #    (-)*(-) = (+)     Invert p and q signs
+  if (p < 0 and q < 0) or (p > 0 and q < 0):
     p *= -1
     q *= -1
+
 
   # The case where p/q is an integer number must be taken into 
   # consideration as it could save a lot of time.
@@ -105,41 +163,33 @@ def powerrat (x, p, q):
   if possibleRealExponent.is_integer():
     p = int(possibleRealExponent)
     q = 1
-  
+
   y = powerint(x, p)
-  
+
   # In this case, it's like calling powerint directly.
   # There's nothing more to do
   if q == 1:
     return y
-  
-  if q < 0:
-    y = 1/y
-    q *= -1
-  
-  tol = _POWERRAT_TOLERANCE
-  
+
+  # First interval
   a = 0
   b = 10
-
-  while  bisection(a,q,y)*bisection(b,q,y)>0:
-    #print(bisection(a,q,y),bisection(b,q,y))
+  # Expand the interval if f(a)f(b)>0
+  while _bisection(a,q,y)*_bisection(b,q,y) > 0:
     b+=1000
 
+  # Perfom bisection method for finding the root
   for _ in range(1000):
-    c = (a+b)/2
-    if (b-a)>tol:
-      if bisection(a,q,y)*bisection(c,q,y)>0:
+    c = (a + b)/2
+    if (b - a) > _POWERRAT_TOLERANCE:
+      if _bisection(a,q,y)*_bisection(c,q,y) > 0:
         a = c
       else:
         b = c
     else:
-      #print(c, b, a)
       return c
-  #print(c, b, a)
   return c
 
-#print(powerrat (2,3, -4))
 
 def test():
   """Test powerint and powerrat functions.
@@ -292,12 +342,15 @@ def test():
     ([87.5, 5.3, 0]), ([87315, 53, 0])
   )
 
+  numberString = ''
+
   # ====================================================================
   # Tests for powerint
-  print('='*60, "\nTesting powerint()...\n", '-'*60)
+  print('='*60, "\nTesting powerint()...\n", '-'*59)
   # Invalid combinations of x^p
   for base, exponent in powerintInvalids:
-    print (f"Testing: ({base})^({exponent})\t\t", end=' ')
+    numberString = f'({base})^({exponent})'
+    print ("Testing: {0:<30}\t\t".format(numberString), end=' ')
     
     try:
       powerint(base, exponent)
@@ -312,23 +365,26 @@ def test():
 
   # Valid integer combinations of x^p
   for base, exponent in simpleIntPowers:
-    print (f"Testing: ({base})^({exponent})\t\t", end=' ')
+    numberString = f'({base})^({exponent})'
+    print ("Testing: {0:<30}\t\t".format(numberString), end=' ')
     test_powerint(base, exponent)
     print("-> Pass <-")
 
   # Valid floating point combinations of x^p (p is always integer)
   for base, exponent in simpleFloatPowers:
-    print (f"Testing: ({base})^({np.int64(exponent)})\t\t", end=' ')
+    numberString = f'({base})^({int(exponent)})'
+    print ("Testing: {0:<30}\t\t".format(numberString), end=' ')
     test_powerint(base, exponent, dataType=float)
     print("-> Pass <-")
 
   # ====================================================================
   # Tests for powerrat
-  print('='*60, "\nTesting powerrat()...\n", '-'*60,)
+  print('='*60, "\nTesting powerrat()...\n", '-'*59)
   
   # Invalid combinations of x^(p/q)
   for base, exponentN, exponentD in powerratInvalids:
-    print (f"Testing: ({base})^({exponentN}/{exponentD})\t\t", end=' ')
+    numberString = f'({base})^({exponentN}/{exponentD})'
+    print ("Testing: {0:<30}\t\t".format(numberString), end=' ')
     try:
       powerrat(base, exponentN, exponentD)
       assert False, "X ERROR X"
@@ -342,13 +398,15 @@ def test():
   
   # Valid integer combinations of x^(p/q)
   for base, expNum, expDenom in rationalIntPowers:
-    print (f"Testing: ({base})^({expNum}/{expDenom})\t\t", end=' ')
+    numberString = f'({base})^({expNum}/{expDenom})'
+    print ("Testing: {0:<30}\t\t".format(numberString), end=' ')
     test_powerrat(base, expNum, expDenom)
     print("-> Pass <-")
 
   # Valid floating point combinations of x^(p/q) (p and q are always integers)
   for base, expNum, expDenom in rationalFloatPowers:
-    print (f"Testing: ({base})^({expNum}/{expDenom})\t\t", end=' ')
+    numberString = f'({base})^({expNum}/{expDenom})'
+    print ("Testing: {0:<30}\t\t".format(numberString), end=' ')
     test_powerrat(base, expNum, expDenom, dataType=float)
     print("-> Pass <-")
 
@@ -403,8 +461,6 @@ def test_powerrat(base, exN, exD, dataType=int):
     Nothing
   """
 
-  tol = _POWERRAT_TOLERANCE
-
   ans = powerrat(base, exN, exD)
 
   if base == 0:
@@ -418,7 +474,7 @@ def test_powerrat(base, exN, exD, dataType=int):
   # For debuging purposes only
   #print('{0} || {1}'.format(ans, pyPow))
 
-  assert math.isclose(ans, pyPow, abs_tol=tol), "X ERROR X"
+  assert math.isclose(ans, pyPow, abs_tol=_POWERRAT_TOLERANCE), "X ERROR X"
   
 
 if __name__ == "__main__":
