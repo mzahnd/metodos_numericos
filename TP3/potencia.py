@@ -110,8 +110,6 @@ def _bisection(point, q, y):
     Noting
   """
 
-  '''Esta función es la que se evalúa para despejar 
-  por bisección point = y^(1/q)'''
   return powerint(point, q) - y
 
 def powerrat (x, p, q):
@@ -436,6 +434,7 @@ def test_powerint(base, exponent, dataType=int):
   Raises:
     Nothing
   """
+  
   ans = powerint(base, exponent)
 
   if base == 0:
