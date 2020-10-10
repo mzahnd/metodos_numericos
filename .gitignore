@@ -1,3 +1,5 @@
 *.pdf
 *.zip
 .vscode
+TP4/weirdError.png
+__pycache__/
