@@ -15,8 +15,6 @@ import time
 import warnings
 
 
-
-
 def ruku4(f, x0, t0, tf, h):
     step = h
     global t_arr
@@ -26,23 +24,26 @@ def ruku4(f, x0, t0, tf, h):
         t_arr.append(time_step)
         time_step += step
 
-    global x
-    x = np.zeros((len(t_arr), np.shape(x0)[0]))
+    global _ruku4_global_x
+    _ruku4_global_x = np.zeros((len(t_arr), np.shape(x0)[0]))
 
-    x[0, :] = x0
+    _ruku4_global_x[0, :] = x0
 
     stepOver2 = step / 2
     for k in range(1, len(t_arr)):
-        f1 = f(t_arr[k - 1], x[k - 1, :])
-        f2 = f(t_arr[k - 1] + stepOver2, x[k - 1, :] + stepOver2 * f1)
-        f3 = f(t_arr[k - 1] + stepOver2, x[k - 1, :] + stepOver2 * f2)
-        f4 = f(t_arr[k - 1] + step, x[k - 1, :] + step * f3)
+        f1 = f(t_arr[k - 1], _ruku4_global_x[:k])
+        f2 = f(t_arr[k - 1] + stepOver2, _ruku4_global_x[:k] + stepOver2 * f1)
+        f3 = f(t_arr[k - 1] + stepOver2, _ruku4_global_x[:k] + stepOver2 * f2)
+        f4 = f(t_arr[k - 1] + step, _ruku4_global_x[:k] + step * f3)
 
         xnew = step * (f1 + 2 * f2 + 2 * f3 + f4) / 6
-        x[k, :] = x[k - 1, :] + xnew
+        if type(xnew) is np.ndarray:
+            xnew = xnew[-1]
+        
+        _ruku4_global_x[k] = _ruku4_global_x[k - 1] + xnew
 
     #print("ruk4: Done.")
-    return t_arr, x
+    return t_arr, _ruku4_global_x
 
 
 def closest(lst, K):
@@ -50,7 +51,7 @@ def closest(lst, K):
     return lst[min(range(len(lst)), key=lambda i: abs(lst[i] - K))]
 
 
-def mackeyglass_dxdt(t, x_org):
+def mackeyglass_dxdt(t, x):
     tMinus02 = t - 0.2
     xt02 = 0
     
@@ -58,13 +59,13 @@ def mackeyglass_dxdt(t, x_org):
         closest_time = closest(t_arr, tMinus02)
         for index, element in enumerate(t_arr):
             if np.isclose(element, closest_time):
-                xt02 = x[index]
+                xt02 = _ruku4_global_x[index]
                 break
     else:
         xt02 = 0.5
-    
+
     xt02FiveTimes = powerint(float(xt02), 5)
-    dxdt = 6 - 16 * x_org * xt02FiveTimes / (1 + xt02FiveTimes)
+    dxdt = 6 - (16 * x[-1] * xt02FiveTimes) / (1 + xt02FiveTimes)
 
     return dxdt
 
@@ -72,13 +73,20 @@ def mackeyglass_dxdt(t, x_org):
 def errorCalc(f, x0, t0, tf, h, obtainedX):
     # HS means Half step -> x Half step: Xs obtained with a step half of the size
 
-    _, xDoubleStep = ruku4(f, x0, t0, tf, h / 2)
+    halfStep = h/2
+    # There are cases where obtainedX's size has an odd value, whenever
+    # this happens, we need to add two extra values to the error array, so the
+    # last one can be compared without raising an IndexError exception.
+    if len(obtainedX) & 1:
+        tf += 2*halfStep
 
-    errk = np.zeros(0)
+    _, xDoubleStep = ruku4(f, x0, t0, tf, halfStep)
 
-    for i in range(obtainedX.shape[1]):
-        error = (xDoubleStep[2 * i] - obtainedX[i]) / 31
-        np.append(errk, error)
+    errk = np.zeros(obtainedX.shape[0])
+
+    for i in range(obtainedX.shape[0]):
+        error = (xDoubleStep[2 * i][0] - obtainedX[i][0]) / 31
+        errk[i] = error
 
     return errk
 
@@ -89,29 +97,32 @@ def mackeyglass():
     tf = 5
     step = tf / 1000
    
-    # print(f"xrk4: {xrk4}") # xrk4: [[0.]]
-    # errorrk4 = errorCalc(mackeyglass_dxdt, x0, t0, tf, step, xrk4)
-
     t, xrk4 = ruku4(mackeyglass_dxdt, x0, t0, tf, step)
+
+    # rk45 = solve_ivp(mackeyglass_dxdt, [t0,tf], x0, method='RK45',
+    #                     t_eval=None, rtol=1e-3, atol=1e-5)
+
+
+    #print(f"xrk4: {xrk4}") # xrk4: [[0.]]
+    errorrk4 = errorCalc(mackeyglass_dxdt, x0, t0, tf, step, xrk4)
 
     # Graph
     print("Plotting...")
     _, axes = plt.subplots()
     axes.plot(t, xrk4[:], label='RuKu 4')
+    #axes.plot(rk45.t, rk45.y.T, label='RK45')
     plt.title('Mackey-Glass')
     axes.legend()
 
-    #print("Calculation Error:")
-    # print(errorrk4)
+    print("Calculation Error:")
+    #print(errorrk4)
+    _, errorAxes = plt.subplots()
+    errorAxes.plot(t, errorrk4[:], label='Error')
+    plt.title('Mackey-Glass - Error')
+    errorAxes.legend()
 
-    try:
-        print("Showing plot.")
-        plt.show()
-    except KeyboardInterrupt:
-        print("Closing plot...")
-        plt.close('all')
-
-    print("mackeyglass: Done.")
+    print("Showing plots.")
+    plt.show()
 
 
 def powerint (x, p):
@@ -143,11 +154,16 @@ def powerint (x, p):
     # Check that both arguments are valid.
     if base < 0:
         print(f'Your input:\n\tBase: {base}\n\tExponent: {exponent}')
-        raise RuntimeError(
-            "Please provide a non negative number for the base.")
+        raise RuntimeError("Please provide a non negative number" \
+                            " for the base.")
+    elif type(base) is (not int or not float):
+        print(f'Detected base number of type: {type(base)}')
+        raise TypeError("Exponent must be casted to int or float to avoid" \
+                        " possible over or underflows.")
     elif (type(exponent) is not int or not np.intc or not np.int_ \
             or not np.int8 or not np.int16 or not np.int32 or not np.int64) \
             and (type(exponent) is not type(base)):
+        print(f'Detected exponent number of type: {type(exponent)}')
         raise TypeError("Exponent must be an int.")
     elif base == 0:
         if exponent == 0:
@@ -465,7 +481,7 @@ def compareOutputs(ruku4_x, rk45_x):
             return False
 
     return allSimilar
-    
+
 
 def plotRuku4vsRK45(ruku4_x, ruku4_t, rk45_x, rk45_t, title='Test plot.'):
     # Graph
@@ -482,16 +498,15 @@ def plotRuku4vsRK45(ruku4_x, ruku4_t, rk45_x, rk45_t, title='Test plot.'):
 
 
 if __name__ == "__main__":
-    print("Running...")
+    print("Running tests...")
     initialTime = time.time_ns()
+    
     test()
-    #mackeyglass()
-
+    
     finalTime = time.time_ns()
 
-    print("\nRan in: %f s (%d ns)" % ((finalTime-initialTime)*10**(-9),
-                                    finalTime-initialTime))
+    print("\nTests ran in: %f s (%d ns)" % ((finalTime-initialTime)*10**(-9),
+                                            finalTime-initialTime))
 
-
-    #mackeyglass()
-    #print("Main code: Done.")
+    print("Calculating Mackey-Glass equation.")
+    mackeyglass()
