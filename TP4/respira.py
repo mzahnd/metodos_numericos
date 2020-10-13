@@ -86,7 +86,7 @@ def errorCalc(f, x0, t0, tf, h, obtainedX):
 
     for i in range(obtainedX.shape[0]):
         error = (xDoubleStep[2 * i][0] - obtainedX[i][0]) / 31
-        errk[i] = error
+        errk[i] = abs(error)
 
     return errk
 
@@ -95,33 +95,49 @@ def mackeyglass():
     x0 = np.array([0.5])
     t0 = 0
     tf = 5
-    step = tf / 1000
+    step = tf / 1500
    
+    initialTimeRuku4 = time.time_ns()
+    
     t, xrk4 = ruku4(mackeyglass_dxdt, x0, t0, tf, step)
 
-    # rk45 = solve_ivp(mackeyglass_dxdt, [t0,tf], x0, method='RK45',
-    #                     t_eval=None, rtol=1e-3, atol=1e-5)
+    finalTimeRuku4 = time.time_ns()
 
+    print("Algorithm ran in: %f s\n" % (
+                                  (finalTimeRuku4-initialTimeRuku4)*10**(-9))
+        )
 
-    #print(f"xrk4: {xrk4}") # xrk4: [[0.]]
+    print('Estimating errors...')
+
+    initialTimeError = time.time_ns()
+
     errorrk4 = errorCalc(mackeyglass_dxdt, x0, t0, tf, step, xrk4)
+    
+    finalTimeError = time.time_ns()
+
+    print("Error calculated in: %f s\n" % (
+                        (finalTimeError-initialTimeError)*10**(-9))
+        )
+
+    print("Maximum absolute value of the estimated error is: {:e}\n".format(
+                                                            np.amax(errorrk4)))
 
     # Graph
     print("Plotting...")
     _, axes = plt.subplots()
     axes.plot(t, xrk4[:], label='RuKu 4')
-    #axes.plot(rk45.t, rk45.y.T, label='RK45')
     plt.title('Mackey-Glass')
     axes.legend()
 
     print("Calculation Error:")
-    #print(errorrk4)
     _, errorAxes = plt.subplots()
     errorAxes.plot(t, errorrk4[:], label='Error')
     plt.title('Mackey-Glass - Error')
     errorAxes.legend()
 
-    print("Showing plots.")
+    print("Plots ready.")
+    print('Press enter to show both plots.')
+    input()
     plt.show()
 
 
@@ -505,7 +521,7 @@ if __name__ == "__main__":
     
     finalTime = time.time_ns()
 
-    print("\nTests ran in: %f s (%d ns)" % ((finalTime-initialTime)*10**(-9),
+    print("\nTests ran in: %f s (%d ns)\n" % ((finalTime-initialTime)*10**(-9),
                                             finalTime-initialTime))
 
     print("Calculating Mackey-Glass equation.")

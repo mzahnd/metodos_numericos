@@ -1,0 +1,7 @@
+Calculating Mackey-Glass equation.
+Algorithm ran in: 540.448475 s
+
+Calculating errors during approximation.
+Error calculated in: 2186.560737 s
+
+Maximum absolute value of the estimated error is: 3.386985e-03
