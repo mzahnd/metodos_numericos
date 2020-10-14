@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
 Sources and documentation:
-
     https://cp-algorithms.com/algebra/binary-exp.html
     https://eli.thegreenplace.net/2009/03/21/efficient-integer-exponentiation-algorithms
 """
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import solve_ivp   # Used for testing
+from scipy.integrate import solve_ivp  # Used for testing
 import time
 import warnings
 
@@ -31,18 +29,18 @@ def ruku4(f, x0, t0, tf, h):
 
     stepOver2 = step / 2
     for k in range(1, len(t_arr)):
-        f1 = f(t_arr[k - 1], _ruku4_global_x[:k])
-        f2 = f(t_arr[k - 1] + stepOver2, _ruku4_global_x[:k] + stepOver2 * f1)
-        f3 = f(t_arr[k - 1] + stepOver2, _ruku4_global_x[:k] + stepOver2 * f2)
-        f4 = f(t_arr[k - 1] + step, _ruku4_global_x[:k] + step * f3)
+        f1 = f(t_arr[k - 1], _ruku4_global_x[k-1])
+        f2 = f(t_arr[k - 1] + stepOver2, _ruku4_global_x[k-1] + stepOver2 * f1)
+        f3 = f(t_arr[k - 1] + stepOver2, _ruku4_global_x[k-1] + stepOver2 * f2)
+        f4 = f(t_arr[k - 1] + step, _ruku4_global_x[k-1] + step * f3)
 
         xnew = step * (f1 + 2 * f2 + 2 * f3 + f4) / 6
         if type(xnew) is np.ndarray:
             xnew = xnew[-1]
-        
+
         _ruku4_global_x[k] = _ruku4_global_x[k - 1] + xnew
 
-    #print("ruk4: Done.")
+    # print("ruk4: Done.")
     return t_arr, _ruku4_global_x
 
 
@@ -54,7 +52,7 @@ def closest(lst, K):
 def mackeyglass_dxdt(t, x):
     tMinus02 = t - 0.2
     xt02 = 0
-    
+
     if tMinus02 > 0:
         closest_time = closest(t_arr, tMinus02)
         for index, element in enumerate(t_arr):
@@ -65,7 +63,7 @@ def mackeyglass_dxdt(t, x):
         xt02 = 0.5
 
     xt02FiveTimes = powerint(float(xt02), 5)
-    dxdt = 6 - (16 * x[-1] * xt02FiveTimes) / (1 + xt02FiveTimes)
+    dxdt = 6 - (16 * x * xt02FiveTimes) / (1 + xt02FiveTimes)
 
     return dxdt
 
@@ -73,12 +71,12 @@ def mackeyglass_dxdt(t, x):
 def errorCalc(f, x0, t0, tf, h, obtainedX):
     # HS means Half step -> x Half step: Xs obtained with a step half of the size
 
-    halfStep = h/2
+    halfStep = h / 2
     # There are cases where obtainedX's size has an odd value, whenever
     # this happens, we need to add two extra values to the error array, so the
     # last one can be compared without raising an IndexError exception.
     if len(obtainedX) & 1:
-        tf += 2*halfStep
+        tf += 2 * halfStep
 
     _, xDoubleStep = ruku4(f, x0, t0, tf, halfStep)
 
@@ -96,31 +94,31 @@ def mackeyglass():
     t0 = 0
     tf = 5
     step = tf / 1500
-   
+
     initialTimeRuku4 = time.time_ns()
-    
+
     t, xrk4 = ruku4(mackeyglass_dxdt, x0, t0, tf, step)
 
     finalTimeRuku4 = time.time_ns()
 
     print("Algorithm ran in: %f s\n" % (
-                                  (finalTimeRuku4-initialTimeRuku4)*10**(-9))
-        )
+            (finalTimeRuku4 - initialTimeRuku4) * 10 ** (-9))
+          )
 
     print('Estimating errors...')
 
     initialTimeError = time.time_ns()
 
     errorrk4 = errorCalc(mackeyglass_dxdt, x0, t0, tf, step, xrk4)
-    
+
     finalTimeError = time.time_ns()
 
     print("Error calculated in: %f s\n" % (
-                        (finalTimeError-initialTimeError)*10**(-9))
-        )
+            (finalTimeError - initialTimeError) * 10 ** (-9))
+          )
 
     print("Maximum absolute value of the estimated error is: {:e}\n".format(
-                                                            np.amax(errorrk4)))
+        np.amax(errorrk4)))
 
     # Graph
     print("Plotting...")
@@ -141,20 +139,16 @@ def mackeyglass():
     plt.show()
 
 
-def powerint (x, p):
+def powerint(x, p):
     """Calculate base^exponent (x^p)
-
     When p < 0, x^(|p|) is evaluated first and then inverted.
     This way no precision is lost due to floating point during the
     exponentiation part of the process.
-
     Arguments:
         x: Intiger or floating point number greater or equal to zero.
         p: Intiger number (different than zero iff x equals zero).
-
     Returns:
         The solution of x^p
-
     Raises:
         RuntimeError
         TypeError
@@ -162,7 +156,7 @@ def powerint (x, p):
         ZeroDivisionError
         OverflowError
     """
-    
+
     # Change the arguments name for easier reading through the code
     base = x
     exponent = p
@@ -171,13 +165,13 @@ def powerint (x, p):
     if base < 0:
         print(f'Your input:\n\tBase: {base}\n\tExponent: {exponent}')
         raise RuntimeError("Please provide a non negative number" \
-                            " for the base.")
+                           " for the base.")
     elif type(base) is (not int or not float):
         print(f'Detected base number of type: {type(base)}')
         raise TypeError("Exponent must be casted to int or float to avoid" \
                         " possible over or underflows.")
     elif (type(exponent) is not int or not np.intc or not np.int_ \
-            or not np.int8 or not np.int16 or not np.int32 or not np.int64) \
+          or not np.int8 or not np.int16 or not np.int32 or not np.int64) \
             and (type(exponent) is not type(base)):
         print(f'Detected exponent number of type: {type(exponent)}')
         raise TypeError("Exponent must be an int.")
@@ -205,7 +199,7 @@ def powerint (x, p):
     if exponent < 0:
         negativeExponent = True
         exponent *= -1
-  
+
     result = 0
 
     try:
@@ -214,18 +208,18 @@ def powerint (x, p):
     except Warning:
         if negativeExponent is True:
             exponent *= -1
-        raise OverflowError("Overflow while performing: ", 
+        raise OverflowError("Overflow while performing: ",
                             f"{base})^({exponent}).")
 
     if negativeExponent is True and result != 0:
-        return float(1/result)
+        return float(1 / result)
     else:
         return result
 
 
 def _binaryExponent(base, exponent):
     # For an exponent <= 4 the algorithm makes no sense.
-    # log_2(4) = 2 and 4 = 0b100, which will result in the exact same 
+    # log_2(4) = 2 and 4 = 0b100, which will result in the exact same
     # process as the binary exponentiation algorithm.
     #
     # Avoiding it, we are actually saving a few operations (the bitwise and the
@@ -247,7 +241,7 @@ def _binaryExponent(base, exponent):
                 result *= base
             base *= base
             exponent = exponent >> 1
-    
+
     return result
 
 
@@ -263,118 +257,113 @@ def test_powerint():
     simpleIntPowers = (
         ([0, 1]), ([0, 5]), ([0, 17]), ([0, 752]),
         ([2, 0]), ([1, 0]), ([1435, 0]), ([523, 0]),
-        ([1, 1]), ([1, 5]), ([1, -5223]), ([1,-3]),
+        ([1, 1]), ([1, 5]), ([1, -5223]), ([1, -3]),
         ([2, 2]), ([2, 15]), ([2, 5]),
         ([2, -5]), ([2, -58]),
         # Some random-generated sets (using random.org)
-        ([51, -10]),            ([5403, -3]),
-        ([43, 36]),             ([95, 8]),
-        ([27, 10]),             ([32, 5]),
-        ([76, -12]),            ([67, 10]),
-        ([31, 9]),              ([57, -9]),
-        ([17, 14]),             ([38, -60]),
-        ([52, 7]),              ([10, -8]),
-        ([28, -25]),            ([69, 4]),
-        ([67, 10]),             ([75, 3]),
-        ([93, 8]),              ([41, -2]),
-        ([24, -4]),             ([37, 9]),
-        ([82, -38]),            ([48, -5]),
-        ([18, -17]),            ([50, -19]),
-        ([2, 20]),              ([7, -3]),
-        ([90, 20]),             ([592, 94]),
-        ([819645, -369723]),    ([22962, 396793]),
-        ([423837, -78785]),     ([562804, 447158]),
-        ([506033, 1233]),       ([864805, -7011]),
-        ([382783, -713864]),    ([873793, -974258]),
-        ([381540, -262639]),    ([152469, -173293]),
+        ([51, -10]), ([5403, -3]),
+        ([43, 36]), ([95, 8]),
+        ([27, 10]), ([32, 5]),
+        ([76, -12]), ([67, 10]),
+        ([31, 9]), ([57, -9]),
+        ([17, 14]), ([38, -60]),
+        ([52, 7]), ([10, -8]),
+        ([28, -25]), ([69, 4]),
+        ([67, 10]), ([75, 3]),
+        ([93, 8]), ([41, -2]),
+        ([24, -4]), ([37, 9]),
+        ([82, -38]), ([48, -5]),
+        ([18, -17]), ([50, -19]),
+        ([2, 20]), ([7, -3]),
+        ([90, 20]), ([592, 94]),
+        ([819645, -369723]), ([22962, 396793]),
+        ([423837, -78785]), ([562804, 447158]),
+        ([506033, 1233]), ([864805, -7011]),
+        ([382783, -713864]), ([873793, -974258]),
+        ([381540, -262639]), ([152469, -173293]),
     )
 
-
     simpleFloatPowers = (
-      ([0.0, 1]), ([0.0, 17]),
-      ([0.0, 752]),
-      ([2.0, 0]), ([1.0, 0]),
-      ([1435.0, 0]),
-      ([523.0, 0]),
-      ([1.0, 1]), ([1.0, 5]),
-      ([1.0, -5223]),
-      ([1.0, -3]),
-      ([2.0, 2]), ([2.0, 15]),
-      ([2.0, -5]), ([2.0, -58]),
-      # Some random-generated sets (using random.org)
-      ([22652.6, 30]), ([30.55, -37]),
-      ([902.599, -2]), ([385.349, 47]),
-      ([70.846, 91]), ([28.341, 21]),
-      ([51.886, -16]), ([543.81, -69]),
-      ([43.19, -36]), ([95.331, 8]),
-      ([271.991, 10]), ([3220.9, -25]),
-      ([76.57, -12]), ([63.973, 12]),
-      ([31.928, 9]), ([59.695, -9]),
-      ([137.350, 14]), ([338.48, -60]),
-      ([542.261, 17]), ([10.866, -8]),
-      ([28.265, -25]), ([569.852, 4]),
-      ([67.249, 36]), ([75.968, 3]),
-      ([923.4, 81]), ([414.84, 2]),
-      ([24.15, -4]), ([370.314, 9]),
-      ([82.880, -38]), ([48.97, -5]),
-      ([188.91, -17]), ([50.177, -19]),
-      ([2.360, 20]), ([7.376, -3]),
-      ([90.424, 20]), ([59.912, -9]),
+        ([0.0, 1]), ([0.0, 17]),
+        ([0.0, 752]),
+        ([2.0, 0]), ([1.0, 0]),
+        ([1435.0, 0]),
+        ([523.0, 0]),
+        ([1.0, 1]), ([1.0, 5]),
+        ([1.0, -5223]),
+        ([1.0, -3]),
+        ([2.0, 2]), ([2.0, 15]),
+        ([2.0, -5]), ([2.0, -58]),
+        # Some random-generated sets (using random.org)
+        ([22652.6, 30]), ([30.55, -37]),
+        ([902.599, -2]), ([385.349, 47]),
+        ([70.846, 91]), ([28.341, 21]),
+        ([51.886, -16]), ([543.81, -69]),
+        ([43.19, -36]), ([95.331, 8]),
+        ([271.991, 10]), ([3220.9, -25]),
+        ([76.57, -12]), ([63.973, 12]),
+        ([31.928, 9]), ([59.695, -9]),
+        ([137.350, 14]), ([338.48, -60]),
+        ([542.261, 17]), ([10.866, -8]),
+        ([28.265, -25]), ([569.852, 4]),
+        ([67.249, 36]), ([75.968, 3]),
+        ([923.4, 81]), ([414.84, 2]),
+        ([24.15, -4]), ([370.314, 9]),
+        ([82.880, -38]), ([48.97, -5]),
+        ([188.91, -17]), ([50.177, -19]),
+        ([2.360, 20]), ([7.376, -3]),
+        ([90.424, 20]), ([59.912, -9]),
     )
 
     numberString = ''
 
     # Tests for powerint
-    print('='*60, "\nTesting powerint()...\n", '-'*59)
+    print('=' * 60, "\nTesting powerint()...\n", '-' * 59)
     # Invalid combinations of x^p
-  
+
     # Valid integer combinations of x^p
     for base, exponent in simpleIntPowers:
         numberString = f'({base})^({exponent})'
-        print ("Testing: {0:<30}\t\t".format(numberString), end=' ')
+        print("Testing: {0:<30}\t\t".format(numberString), end=' ')
         test_powerint_assert(base, exponent)
         print("-> Pass <-")
-  
+
     # Valid floating point combinations of x^p (p is always integer)
     for base, exponent in simpleFloatPowers:
         numberString = f'({base})^({int(exponent)})'
-        print ("Testing: {0:<30}\t\t".format(numberString), end=' ')
+        print("Testing: {0:<30}\t\t".format(numberString), end=' ')
         test_powerint_assert(base, exponent, dataType=float)
         print("-> Pass <-")
 
 
 def test_powerint_assert(base, exponent, dataType=int):
     """Test case for powerint function.
-
     Calls powerint and compares its answer with python's exponentiation
     function.
     Whenever the exponent is a negative number, numpy's allclose function
     is used instead to deal with floating point numbers.
-
     This function will stop the code execution when it finds an error.
-
     Returns:
         None
-
     Raises:
         Nothing
     """
-  
+
     ans = powerint(base, exponent)
-    #print(ans)
+    # print(ans)
 
     # This is not meant to be fast, but to be simple and not failing.
     if base == 0:
         pyPow = 0
     elif exponent < 0 and base != 0:
-        pyPow = 1/(base**((-1)*exponent))   
+        pyPow = 1 / (base ** ((-1) * exponent))
     else:
-        pyPow = base**exponent
-  
-    # For debuging purposes only
-    #print('{0} || {1}'.format(ans, pyPow))
+        pyPow = base ** exponent
 
-    #assert True, "X ERROR X"
+    # For debuging purposes only
+    # print('{0} || {1}'.format(ans, pyPow))
+
+    # assert True, "X ERROR X"
     if dataType == int and exponent > 0:
         assert ans == pyPow, "X ERROR X"
     else:
@@ -382,14 +371,14 @@ def test_powerint_assert(base, exponent, dataType=int):
 
 
 def test_ruku4():
-    """We'll compare our answers with the ones from scipy.integrate.solve_ivp 
+    """We'll compare our answers with the ones from scipy.integrate.solve_ivp
     using RK45 method."""
 
     # Some example functions were taken from:
     # http://epsem.upc.edu/~fpq/minas/pr-sol/prob-edos-n-solu
     #
     # Or were given during the corresponding lecture.
-    
+
     # Step is calculated as the second element of 'interval'/'step_divisor'
     functionsAndParams = (
         {
@@ -405,28 +394,28 @@ def test_ruku4():
             'x0': np.array([np.pi])
         },
         {
-            'function': ['ln(t)*x', lambda t, x: np.log(t)*x],
+            'function': ['ln(t)*x', lambda t, x: np.log(t) * x],
             'interval': [0.1, 50],
             'step_divisor': 10000,
             'x0': np.array([-1])
         },
         {
-            'function': ['x*e^(t)', lambda t, x: x*np.exp(t)],
+            'function': ['x*e^(t)', lambda t, x: x * np.exp(t)],
             'interval': [-5, 5],
             'step_divisor': 10000,
             'x0': np.array([0.458])
         },
         {
-            'function': ['5*e^(-t)+0.5*e^(-2t)-e^(-2t)*sin(e^t)', 
-                lambda t, x: 
-                5*np.exp(-t)+np.exp(-2*t)*(0.5-np.sin(np.exp(t)))],
+            'function': ['5*e^(-t)+0.5*e^(-2t)-e^(-2t)*sin(e^t)',
+                         lambda t, x:
+                         5 * np.exp(-t) + np.exp(-2 * t) * (0.5 - np.sin(np.exp(t)))],
             'interval': [-5, 5],
             'step_divisor': 10000,
             'x0': np.zeros(1)
         },
         {
-            'function': ['1.64*e^(-t)-5.45te^(-t)+e^(-t)*(t^2)*(ln(t)/2-3/4)', 
-                lambda t, x: np.exp(-t)*(1.64-5.45*t+t*t*(np.log(t)/2-3/4))],
+            'function': ['1.64*e^(-t)-5.45te^(-t)+e^(-t)*(t^2)*(ln(t)/2-3/4)',
+                         lambda t, x: np.exp(-t) * (1.64 - 5.45 * t + t * t * (np.log(t) / 2 - 3 / 4))],
             'interval': [0.01, 10],
             'step_divisor': 10000,
             'x0': np.zeros(1)
@@ -436,47 +425,46 @@ def test_ruku4():
             # dx = (A*cos(w*t)-x) / (R*C)
             # Where, A = 1.0; w = 2*pi*1000; R = 1e3 and C = 1e-6
             'function': ['(1.0*cos(2*pi*1000*t)-x)/(1e3*1e-6)',
-                lambda t, x: ((np.cos(np.pi*2000*t)-x)*1000)],
+                         lambda t, x: ((np.cos(np.pi * 2000 * t) - x) * 1000)],
             'interval': [0, 0.005],
             'step_divisor': 1000,
             'x0': np.zeros(1)
         },
     )
 
-    print('='*60, "\nTesting ruku4()...\n", '-'*59)
+    print('=' * 60, "\nTesting ruku4()...\n", '-' * 59)
 
     for fun in functionsAndParams:
         fname = fun['function'][0]
         x0 = fun['x0']
         t0 = fun['interval'][0]
         tf = fun['interval'][1]
-        step = fun['interval'][1]/fun['step_divisor']
+        step = fun['interval'][1] / fun['step_divisor']
 
         print('Comparing:')
         print(f'\tf(t, x) = {fname}')
         print(f'\tIn [{t0} ; {tf}], using a step = {step} and x0 = {x0}')
-        
-        #print('Computing function using ruku4...', end=' ')
+
+        # print('Computing function using ruku4...', end=' ')
         tRuku4, xRuku4 = ruku4(fun['function'][1], x0, t0, tf, step)
-        #print('Done.')
+        # print('Done.')
 
-        #print('Computing function using solve_ivp at the same points...', 
+        # print('Computing function using solve_ivp at the same points...',
         #        end=' ')
-        rk45 = solve_ivp(fun['function'][1],[t0,tf], x0, method='RK45',
-                        t_eval=tRuku4, rtol=1e-13, atol=1e-14)
-        #print('Done.')
+        rk45 = solve_ivp(fun['function'][1], [t0, tf], x0, method='RK45',
+                         t_eval=tRuku4, rtol=1e-13, atol=1e-14)
+        # print('Done.')
 
-
-        #print('Starting comparison between both answers...')
+        # print('Starting comparison between both answers...')
         equalX = compareOutputs(xRuku4, rk45.y.T)
-        #print('Done.', end=' ')
+        # print('Done.', end=' ')
         if not equalX:
             print('X FAIL X')
             print('Errors were found while comparing both functions.')
         else:
             print('-> Pass <-')
-            
-    #plotRuku4vsRK45(xRuku4, tRuku4, rk45.y, rk45.t)
+
+    # plotRuku4vsRK45(xRuku4, tRuku4, rk45.y, rk45.t)
 
 
 def compareOutputs(ruku4_x, rk45_x):
@@ -486,14 +474,14 @@ def compareOutputs(ruku4_x, rk45_x):
     for i in range(ruku4_x.size):
         try:
             ans = math.isclose(ruku4_x[i], rk45_x[i],
-                                rel_tol=1e-03, abs_tol=1e-05)
+                               rel_tol=1e-03, abs_tol=1e-05)
             if not ans:
                 print(f'False: {ruku4_x[i]} || {rk45_x[i]}')
                 allSimilar = False
 
         except IndexError:
-            print('The computed value was too large.', 
-            'Try reducing the interval for this function.')
+            print('The computed value was too large.',
+                  'Try reducing the interval for this function.')
             return False
 
     return allSimilar
@@ -504,10 +492,9 @@ def plotRuku4vsRK45(ruku4_x, ruku4_t, rk45_x, rk45_t, title='Test plot.'):
     print("Plotting...")
     _, axes = plt.subplots()
     axes.plot(ruku4_t, ruku4_x[:], label='RuKu 4')
-    axes.plot(rk45_t, rk45_x[0,:], label='RK5')
+    axes.plot(rk45_t, rk45_x[0, :], label='RK5')
     plt.title(title)
     axes.legend()
-    
 
     print("Showing plot.")
     plt.show()
@@ -516,13 +503,13 @@ def plotRuku4vsRK45(ruku4_x, ruku4_t, rk45_x, rk45_t, title='Test plot.'):
 if __name__ == "__main__":
     print("Running tests...")
     initialTime = time.time_ns()
-    
+
     test()
-    
+
     finalTime = time.time_ns()
 
-    print("\nTests ran in: %f s (%d ns)\n" % ((finalTime-initialTime)*10**(-9),
-                                            finalTime-initialTime))
+    print("\nTests ran in: %f s (%d ns)\n" % ((finalTime - initialTime) * 10 ** (-9),
+                                              finalTime - initialTime))
 
     print("Calculating Mackey-Glass equation.")
     mackeyglass()
