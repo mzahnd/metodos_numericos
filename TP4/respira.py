@@ -492,19 +492,6 @@ def compareOutputs(ruku4_x, rk45_x):
     return allSimilar
 
 
-def plotRuku4vsRK45(ruku4_x, ruku4_t, rk45_x, rk45_t, title='Test plot.'):
-    # Graph
-    print("Plotting...")
-    _, axes = plt.subplots()
-    axes.plot(ruku4_t, ruku4_x[:], label='RuKu 4')
-    axes.plot(rk45_t, rk45_x[0, :], label='RK5')
-    plt.title(title)
-    axes.legend()
-
-    print("Showing plot.")
-    plt.show()
-
-
 if __name__ == "__main__":
     print("Running tests...")
     initialTime = time.time_ns()
