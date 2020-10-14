@@ -98,7 +98,7 @@ def mackeyglass():
     x0 = np.array([0.5])
     t0 = 0
     tf = 5
-    step = tf / 500
+    step = tf / 1500
 
     initialTimeRuku4 = time.time_ns()
 
