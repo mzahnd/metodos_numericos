@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Sources and documentation:
+Trabajo Práctico: Ecuaciones Diferenciales Ordinarias
+
+@author: Batinic Rey, Joaquín
+@author: Pompozzi, Magalí M.
+@author: Zahnd, Martín E.
+
+Sources:
+    Binary exponentiation algorithm:
     https://cp-algorithms.com/algebra/binary-exp.html
     https://eli.thegreenplace.net/2009/03/21/efficient-integer-exponentiation-algorithms
 """
@@ -14,7 +21,29 @@ import warnings
 
 
 def ruku4(f, x0, t0, tf, h):
+    """Custom implementation of the Runge-Kuttta 4 algorithm.
+    
+    This function can be used as a normal RuKu 4 implementations, but it
+    also makes the whole 't' and 'x' arrays visible to other functions through
+    the following arrays:
+        _ruku4_global_tArr
+        _ruku4_global_x
+    This allows your problem's function to access and read any needed data from
+    the ongoing process.
+    
+    Do not recommended modify the values inside any of the global arrays, as it
+    will leave to invalid outputs.
+    
+    Arguments:
+        f: Function handler. Must recieve two arguments, t and x. f(t, x).
+        x0: Initial value
+        t0 / tf: Initial and final time to evaluate
+        h: Desiered step
+    """
+    
+    # Let's make this function a little bit more readable
     step = h
+    
     global _ruku4_global_tArr
     _ruku4_global_tArr = []
     time_step = t0
@@ -47,7 +76,6 @@ def ruku4(f, x0, t0, tf, h):
 
         _ruku4_global_x[k] = _ruku4_global_x[k - 1] + xnew
 
-    # print("ruk4: Done.")
     return _ruku4_global_tArr, _ruku4_global_x
 
 
@@ -83,15 +111,11 @@ def errorCalc(f, x0, t0, tf, h, obtainedX):
     if len(obtainedX) & 1:
         tf += 2 * halfStep
 
-    _, xDoubleStep = ruku4(f, x0, t0, tf, halfStep)
+    _, xHalfStep = ruku4(f, x0, t0, tf, halfStep)
 
-    errk = np.zeros(obtainedX.shape[0])
+    error = abs((obtainedX[-1][0] - xHalfStep[-1][0])) / 15
 
-    for i in range(obtainedX.shape[0]):
-        error = (xDoubleStep[2 * i][0] - obtainedX[i][0]) / 31
-        errk[i] = abs(error)
-
-    return errk
+    return error
 
 
 def mackeyglass():
@@ -122,8 +146,7 @@ def mackeyglass():
             (finalTimeError - initialTimeError) * 10 ** (-9))
           )
 
-    print("Maximum absolute value of the estimated error is: {:e}\n".format(
-        np.amax(errorrk4)))
+    print("Estimated global error: {:e}\n".format(errorrk4))
 
     # Graph
     print("Plotting...")
@@ -131,12 +154,6 @@ def mackeyglass():
     axes.plot(t, xrk4[:], label='RuKu 4')
     plt.title('Mackey-Glass')
     axes.legend()
-
-    print("Calculation Error:")
-    _, errorAxes = plt.subplots()
-    errorAxes.plot(t, errorrk4[:], label='Error')
-    plt.title('Mackey-Glass - Error')
-    errorAxes.legend()
 
     print("Plots ready.")
     print('Press enter to show both plots.')
@@ -413,14 +430,16 @@ def test_ruku4():
         {
             'function': ['5*e^(-t)+0.5*e^(-2t)-e^(-2t)*sin(e^t)',
                          lambda t, x:
-                         5 * np.exp(-t) + np.exp(-2 * t) * (0.5 - np.sin(np.exp(t)))],
+                         5 * np.exp(-t) + np.exp(-2 * t) * (0.5 \
+                             - np.sin(np.exp(t)))],
             'interval': [-5, 5],
             'step_divisor': 10000,
             'x0': np.zeros(1)
         },
         {
             'function': ['1.64*e^(-t)-5.45te^(-t)+e^(-t)*(t^2)*(ln(t)/2-3/4)',
-                         lambda t, x: np.exp(-t) * (1.64 - 5.45 * t + t * t * (np.log(t) / 2 - 3 / 4))],
+                         lambda t, x: np.exp(-t) * (1.64 \
+                                - 5.45 * t + t * t * (np.log(t) / 2 - 3 / 4))],
             'interval': [0.01, 10],
             'step_divisor': 10000,
             'x0': np.zeros(1)
@@ -479,7 +498,7 @@ def compareOutputs(ruku4_x, rk45_x):
     for i in range(ruku4_x.size):
         try:
             ans = math.isclose(ruku4_x[i], rk45_x[i],
-                               rel_tol=1e-03, abs_tol=1e-05)
+                               rel_tol=1e-04, abs_tol=1e-05)
             if not ans:
                 print(f'False: {ruku4_x[i]} || {rk45_x[i]}')
                 allSimilar = False
@@ -500,8 +519,9 @@ if __name__ == "__main__":
 
     finalTime = time.time_ns()
 
-    print("\nTests ran in: %f s (%d ns)\n" % ((finalTime - initialTime) * 10 ** (-9),
-                                              finalTime - initialTime))
+    print("\nTests ran in: %f s (%d ns)\n" % ((finalTime - initialTime) \
+                                            * 10 ** (-9),
+                                            finalTime - initialTime))
 
     print("Calculating Mackey-Glass equation.")
     mackeyglass()

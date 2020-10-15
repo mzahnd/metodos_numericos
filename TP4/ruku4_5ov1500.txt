@@ -5,3 +5,22 @@ Calculating errors during approximation.
 Error calculated in: 2186.560737 s
 
 Maximum absolute value of the estimated error is: 3.386985e-03
+
+
+Using /31 for err
+Calculating Mackey-Glass equation.
+Algorithm ran in: 649.319628 s
+
+Estimating errors...
+Error calculated in: 2600.104563 s
+
+Estimated global error is: 4.624767e-04
+
+Using /15
+Calculating Mackey-Glass equation.
+Algorithm ran in: 558.461945 s
+
+Estimating errors...
+Error calculated in: 2215.928321 s
+
+Estimated global error: 9.557852e-04
